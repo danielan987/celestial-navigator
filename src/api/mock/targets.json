@@ -5,7 +5,17 @@
     "name": "Barnard’s Star",
     "kind": "nearby red dwarf, the fastest-moving star in our sky",
     "ra": 269.44626,
-    "dec": 4.76835
+    "dec": 4.76835,
+    "type": "Red dwarf star"
+  },
+  {
+    "id": "kapteyn",
+    "messier": "GJ 191",
+    "name": "Kapteyn’s Star",
+    "kind": "ancient red dwarf passing through our neighbourhood",
+    "ra": 77.98559,
+    "dec": -45.05979,
+    "type": "Red dwarf star"
   },
   {
     "id": "epsindib",
@@ -13,7 +23,8 @@
     "name": "Epsilon Indi B",
     "kind": "pair of brown dwarfs orbiting a nearby star",
     "ra": 331.09668,
-    "dec": -56.80065
+    "dec": -56.80065,
+    "type": "Brown dwarf pair"
   },
   {
     "id": "wise0855",
@@ -21,7 +32,17 @@
     "name": "WISE 0855",
     "kind": "very cold brown dwarf that crosses the sky fast",
     "ra": 133.75977,
-    "dec": -7.24218
+    "dec": -7.24218,
+    "type": "Brown dwarf"
+  },
+  {
+    "id": "luhman16",
+    "messier": "WISE 1049−5319",
+    "name": "Luhman 16",
+    "kind": "pair of brown dwarfs, the nearest to the Sun",
+    "ra": 162.2947,
+    "dec": -53.31683,
+    "type": "Brown dwarf pair"
   },
   {
     "id": "rwaur",
@@ -29,7 +50,8 @@
     "name": "RW Aurigae",
     "kind": "young star whose brightness changes",
     "ra": 76.95659,
-    "dec": 30.40129
+    "dec": 30.40129,
+    "type": "Young variable star"
   },
   {
     "id": "rdra",
@@ -37,7 +59,8 @@
     "name": "R Draconis",
     "kind": "pulsating giant that brightens and fades over months",
     "ra": 248.16723,
-    "dec": 66.75502
+    "dec": 66.75502,
+    "type": "Pulsating red giant"
   },
   {
     "id": "m101",
@@ -45,7 +68,8 @@
     "name": "Pinwheel Galaxy",
     "kind": "face-on spiral galaxy",
     "ra": 210.80227,
-    "dec": 54.34895
+    "dec": 54.34895,
+    "type": "Spiral galaxy"
   },
   {
     "id": "m104",
@@ -53,7 +77,8 @@
     "name": "Sombrero Galaxy",
     "kind": "edge-on spiral galaxy",
     "ra": 189.9976,
-    "dec": -11.6231
+    "dec": -11.6231,
+    "type": "Spiral galaxy"
   },
   {
     "id": "m45",
@@ -61,7 +86,8 @@
     "name": "Pleiades",
     "kind": "open star cluster",
     "ra": 56.75,
-    "dec": 24.1167
+    "dec": 24.1167,
+    "type": "Open star cluster"
   },
   {
     "id": "m1",
@@ -69,7 +95,8 @@
     "name": "Crab Nebula",
     "kind": "supernova remnant",
     "ra": 83.6331,
-    "dec": 22.0145
+    "dec": 22.0145,
+    "type": "Supernova remnant"
   },
   {
     "id": "m16",
@@ -77,23 +104,62 @@
     "name": "Pillars of Creation",
     "kind": "dust pillar in the Eagle Nebula",
     "ra": 274.7125,
-    "dec": -13.835
+    "dec": -13.835,
+    "type": "Star-forming nebula"
   },
   {
-    "id": "m31",
-    "messier": "M31",
-    "name": "Andromeda Galaxy",
-    "kind": "large spiral galaxy",
-    "ra": 10.6847,
-    "dec": 41.2688
+    "id": "horsehead",
+    "messier": "B33",
+    "name": "Horsehead Nebula",
+    "kind": "dark dust cloud against glowing gas",
+    "ra": 85.2458,
+    "dec": -2.4583,
+    "type": "Dark nebula"
   },
   {
-    "id": "m42",
-    "messier": "M42",
-    "name": "Orion Nebula",
-    "kind": "star-forming nebula",
-    "ra": 83.8221,
-    "dec": -5.3911
+    "id": "rhooph",
+    "messier": "ρ Oph",
+    "name": "Rho Ophiuchi Cloud",
+    "kind": "dusty cloud where new stars are forming",
+    "ra": 246.79,
+    "dec": -24.47,
+    "type": "Star-forming cloud"
+  },
+  {
+    "id": "tarantula",
+    "messier": "30 Dor",
+    "name": "Tarantula Nebula",
+    "kind": "giant star-forming nebula in the Large Magellanic Cloud",
+    "ra": 84.67665,
+    "dec": -69.10093,
+    "type": "Nebula in another galaxy"
+  },
+  {
+    "id": "m57",
+    "messier": "M57",
+    "name": "Ring Nebula",
+    "kind": "shell of gas thrown off by a dying star",
+    "ra": 283.39625,
+    "dec": 33.02917,
+    "type": "Planetary nebula"
+  },
+  {
+    "id": "galcentre",
+    "messier": "Sgr A*",
+    "name": "Galactic Centre",
+    "kind": "crowded region at the heart of our galaxy",
+    "ra": 266.417,
+    "dec": -29.008,
+    "type": "Centre of our galaxy"
+  },
+  {
+    "id": "omegacen",
+    "messier": "NGC 5139",
+    "name": "Omega Centauri",
+    "kind": "giant globular cluster of millions of stars",
+    "ra": 201.69683,
+    "dec": -47.47958,
+    "type": "Globular cluster"
   },
   {
     "id": "m51",
@@ -101,6 +167,7 @@
     "name": "Whirlpool Galaxy",
     "kind": "interacting spiral galaxy",
     "ra": 202.4696,
-    "dec": 47.1952
+    "dec": 47.1952,
+    "type": "Spiral galaxy"
   }
 ]

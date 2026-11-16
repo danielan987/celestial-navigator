@@ -99,3 +99,61 @@
 .colour-key__row--active .colour-key__label {
   color: var(--brass-light);
 }
+
+/* Single-band mode: a greyscale guide in place of the colour legend */
+.colour-key__ramp {
+  margin-top: 12px;
+}
+
+.colour-key__ramp-bar {
+  display: block;
+  height: 8px;
+  background: linear-gradient(to right, #000, #fff);
+  box-shadow: 0 0 0 1px var(--border-faint);
+}
+
+.colour-key__ramp-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: var(--fs-label);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
+
+.colour-key__list--single .colour-key__dot {
+  background: var(--text-muted);
+}
+
+.colour-key__list--single .colour-key__row--active .colour-key__dot {
+  background: var(--text);
+}
+
+.colour-key__row:has(.colour-key__row-button) {
+  padding: 0;
+}
+
+/* The other bands, as shortcuts: dimmed until hovered */
+.colour-key__row-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  color: inherit;
+  text-align: left;
+  opacity: 0.55;
+}
+
+.colour-key__row-button:hover,
+.colour-key__row-button:focus-visible {
+  opacity: 1;
+}
+
+.colour-key__row-button:hover .colour-key__label {
+  color: var(--brass-light);
+}

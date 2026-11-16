@@ -10,8 +10,7 @@ type Props = {
   passesStatus: LoadStatus
   passIndex: number
   band: ColourKeyEntry | null // null = colour composite
-  // Set in the Difference and Spectral views: shown instead of the pass (and always real data,
-  // so the "Simulated" tag is hidden)
+  // Set in the Difference and Spectral views: shown instead of the pass
   altImage?: PlateImage | null
   onRetry: () => void
 }
@@ -118,11 +117,6 @@ export default function SkyPlate({
             </>
           )}
         </span>
-        {passesData.simulated && !altImage && (
-          <span className="sky-plate__simulated" aria-hidden="true">
-            Simulated
-          </span>
-        )}
         <span className="sky-plate__scale" style={{ width: `${scaleWidth}%` }} aria-hidden="true">
           <span className="sky-plate__scale-bar" />
           1′

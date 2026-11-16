@@ -23,6 +23,9 @@ import { useUrlState } from './hooks/useUrlState'
 import { hasBandImages, imageForBand } from './utils/bands'
 import { scrollToSection } from './utils/scroll'
 
+// How long a newly opened plate rests on pass I before the blink starts by itself
+const AUTOPLAY_DELAY_MS = 1000
+
 // One page in three parts: the dome (pick a star), the instrument (once a star is picked),
 // and the story (how blinking finds moving worlds).
 export default function App() {
@@ -34,12 +37,12 @@ export default function App() {
   const plateTarget =
     selected ?? (spot && explorer.spotFetch.status === 'ready' ? spotAsTarget(spot) : null)
   const passes = explorer.passesData?.passes ?? []
-  // The chosen band applies only where single-detector images exist (not simulated targets).
+  // The chosen band applies only where single-detector images exist (see hasBandImages).
   const bandsAvailable = hasBandImages(passes)
   const band = bandsAvailable
     ? (explorer.colourKey.find((c) => c.band === explorer.band) ?? null)
     : null
-  // The Difference view needs single-detector images; simulated targets stay on Blink.
+  // The Difference view needs single-detector images; without them it stays on Blink.
   const comparison = explorer.comparison ?? (bandsAvailable ? defaultComparison(passes) : null)
   const showDifference = explorer.view === 'difference' && comparison !== null
   const [earlier, later] = comparison ? [passes[comparison.from], passes[comparison.to]] : []
@@ -94,6 +97,17 @@ export default function App() {
   const framesReady = usePreloadImages(
     passes.map((p) => imageForBand(p, band?.band ?? null)).filter((url) => url !== null),
   )
+
+  // A newly opened plate starts blinking by itself (after a beat on pass I) once every frame
+  // has loaded. Touching any control first cancels it; reduced-motion users start paused.
+  const { autoplayArmed, play } = explorer
+  const canAutoplay = autoplayArmed && framesReady && view === 'blink' && passes.length > 1
+  useEffect(() => {
+    if (!canAutoplay) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const timer = setTimeout(play, AUTOPLAY_DELAY_MS)
+    return () => clearTimeout(timer)
+  }, [canAutoplay, play])
 
   // Picking a star, or entering coordinates, takes you down to the plate.
   const selectedId = selected?.id

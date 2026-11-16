@@ -3,7 +3,7 @@ import './ViewSwitch.css'
 
 type Props = {
   view: PlateView
-  canShowDifference: boolean // false for simulated targets (no single-detector images)
+  canShowDifference: boolean // false without single-detector images
   onChange: (view: PlateView) => void
 }
 

@@ -22,7 +22,7 @@ const lowerFirst = (label: string) => label.charAt(0).toLowerCase() + label.slic
 // "the Pinwheel Galaxy", "the Pleiades", but plain "Barnard’s Star" or "R Draconis":
 // only galaxies, nebulae, clusters and the two plural names take an article
 const withThe = (name: string) =>
-  /(Galaxy|Nebula|Cluster)$|^(Pleiades|Pillars)/.test(name) ? `the ${name}` : name
+  /(Galaxy|Nebula|Cluster|Cloud|Centre)$|^(Pleiades|Pillars)/.test(name) ? `the ${name}` : name
 
 export default function PlateCaption({
   target,
@@ -97,7 +97,6 @@ export default function PlateCaption({
         shown at {lowerFirst(pass.label)} ({passIndex + 1} of {total}). Distant stars and galaxies
         stay fixed; anything nearer that moves will shift between passes.
         {band && ` Showing detector ${band.band} alone (${band.wavelength}), in greyscale.`}
-        {passesData.simulated && ' These are simulated placeholder images, not SPHEREx data yet.'}
       </p>
       <p className="plate-caption__data">
         <span>RA {formatRA(target.ra)}</span>

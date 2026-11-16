@@ -89,6 +89,18 @@
   border-color: var(--brass);
 }
 
+/* Play is the main action, so it's filled brass. While playing it steps back to an outline. */
+.timeline__play {
+  background: var(--brass);
+  border-color: var(--brass);
+  color: var(--bg);
+}
+
+.timeline__play:hover:not(:disabled) {
+  background: var(--brass-light);
+  border-color: var(--brass-light);
+}
+
 .timeline__play {
   flex: 1;
   padding: 0 12px;
@@ -99,8 +111,14 @@
 }
 
 .timeline__play[aria-pressed='true'] {
-  background: var(--brass);
-  color: var(--bg);
+  background: transparent;
+  border-color: var(--brass);
+  color: var(--brass-light);
+}
+
+.timeline__play[aria-pressed='true']:hover {
+  background: rgba(201, 165, 90, 0.08);
+  border-color: var(--brass-light);
 }
 
 .timeline__step:disabled,

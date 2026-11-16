@@ -1,0 +1,30 @@
+{
+  "_source": "REAL SPHEREx data: IRSA cutouts in D1/D3/D6, median-combined per visit, reprojected north-up (requested at 0.15°). Dates are each visit's mean observation date. Made by pipeline/to_app.py. No candidate movers yet.",
+  "targetId": "luhman16",
+  "fieldSizeDeg": 0.1,
+  "passes": [
+    {
+      "id": "luhman16-pass-1",
+      "label": "Pass I",
+      "date": "2025-06-21T00:00:00Z",
+      "imageUrl": "/mock/images/luhman16/pass-1.png",
+      "bandImageUrls": {
+        "D1": "/mock/images/luhman16/pass-1-d1.png",
+        "D3": "/mock/images/luhman16/pass-1-d3.png",
+        "D6": "/mock/images/luhman16/pass-1-d6.png"
+      }
+    },
+    {
+      "id": "luhman16-pass-2",
+      "label": "Pass II",
+      "date": "2026-01-07T00:00:00Z",
+      "imageUrl": "/mock/images/luhman16/pass-2.png",
+      "bandImageUrls": {
+        "D1": "/mock/images/luhman16/pass-2-d1.png",
+        "D3": "/mock/images/luhman16/pass-2-d3.png",
+        "D6": "/mock/images/luhman16/pass-2-d6.png"
+      }
+    }
+  ],
+  "candidates": []
+}

@@ -63,7 +63,6 @@ takes up to a minute per detector and some downloads fail every run.
 | `Pass.bandImageUrls`          | `{ "D1": url, "D3": url, "D6": url }`: each detector alone, greyscale, same stretch as the colour image; leave a band out if the visit has none |
 | `PassesResponse.fieldSizeDeg` | `0.1` (the reprojected grid, not the 0.15° request)                                                                                             |
 | `PassesResponse.candidates`   | `[]` until we detect movers; positions are 0–100 % of the image                                                                                 |
-| `PassesResponse.simulated`    | never set by the backend (mock placeholders only)                                                                                               |
 | `ColourKeyEntry.wavelength`   | median measured wavelength per detector, e.g. "~0.9 µm"                                                                                         |
 | `ColourKeyEntry.band`         | detector id, `"D1"`, matching the `bandImageUrls` keys                                                                                          |
 

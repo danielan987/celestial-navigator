@@ -1,103 +1,143 @@
 # Celestial Navigator
 
-A blink comparator for the NASA "Planet X and SPHEREx" hackathon challenge. Pick a target
-on a sky chart, then step or play through every SPHEREx pass over that spot and look for
-anything that moves. It's the modern version of the comparator Clyde Tombaugh used to
-find Pluto in 1930.
+A blink comparator for the NASA Space Apps "Planet X and SPHEREx" challenge. Pick a star
+on a sky chart or type any coordinates, then step through every pass SPHEREx made over
+that patch of sky and look for anything that moves or changes brightness. It's the
+modern version of the comparator Clyde Tombaugh used to find Pluto in 1930.
 
-**Live preview of the real data:** https://claude.ai/artifact/2TJEFE59zmsWqwEuHHUH75
-(a one-page report built by `pipeline/build_report.py`, shared by link).
+**Preview report of the real data:** https://claude.ai/artifact/2TJEFE59zmsWqwEuHHUH75
+(a one-page report built by `pipeline/build_report.py`).
 
-## Status at a glance
-
-| Part               | State                                                                                                                            |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| Front end (`src/`) | Working MVP: sky chart picker, sky plate, timeline with play, band switcher, observation log                                     |
-| Real SPHEREx data  | M101, M104, M45, M1, M16, made by `pipeline/` and served as mock JSON                                                            |
-| Simulated targets  | M31, M42, M51: placeholder images, marked "Simulated" in the app                                                                 |
-| Django backend     | Not started in this repo. The contract is in `src/api/types.ts`; the how-to is in [docs/backend-notes.md](docs/backend-notes.md) |
-| Mover detection    | Not built. Real targets show "No movers flagged here yet"                                                                        |
-
-The saved working version is tagged **`v0.1-mvp`**. Try new ideas on a branch (see
-[Working on it](#working-on-it)).
-
-## What a user can do
+## What you can do
 
 - **Pick a target** from the dropdown or by clicking a star on the whole-sky chart. The
-  chart shows the ecliptic (where planets and asteroids travel) and the Milky Way.
-- **Blink the passes.** Each pass is SPHEREx's look at that spot, about six months apart.
-  Step with ◀ ▶, the arrow keys, or press Play.
-- **Switch bands.** Show the colour image or one infrared detector alone (D1 ~0.9 µm,
-  D3 ~2.0 µm, D6 ~4.7 µm). Try D1 then D6 on M16: the Pillars of Creation appear.
-- **Read the readouts:** RA/Dec, distance from the ecliptic, passes on file.
-- **Enter coordinates** on the dome, in degrees (`269.446 +4.768`) or hours/degrees
-  (`08h55m10.831s -7d14m42.53s`). Within 0.1° of a target opens it; anywhere else is
-  marked on the chart as an uncharted spot until the backend can process it.
-- **Share a view.** The address bar follows what's on screen: `?target=m45` or
-  `?ra=133.79513&dec=-7.24515`. Opening such a link goes straight to the plate.
-- **Watch the planets.** The Sun, Moon and planets sit on the chart for any date since
-  launch; press Play to see them move along the ecliptic.
+  chart shows the ecliptic (where planets and asteroids travel), the Milky Way, and the
+  Sun, Moon and planets for any date since launch (press Play to watch them move).
+- **Enter coordinates** in degrees (`269.446 +4.768`) or hours/degrees
+  (`08h55m10.831s -7d14m42.53s`). Within 0.1° of a built-in target opens that target;
+  anywhere else opens an **uncharted spot**, which the on-demand backend can fetch from
+  NASA's archive in about two minutes.
+- **Blink** the passes. Each pass is SPHEREx's look at that spot, about six months apart.
+  Step with ◀ ▶ or the arrow keys, or press Play. Show the colour image or one detector
+  alone (D1 ~0.9 µm, D3 ~2.0 µm, D6 ~4.7 µm). Try D1 then D6 on M16: the Pillars of
+  Creation appear.
+- **Difference**: pick two passes and a detector to subtract them. Things that stayed put
+  cancel to black; a mover shows as amber (before) next to blue (after).
+- **Spectral**: maps from SPHEREx's 102-colour all-sky cube: all light, plus carbon
+  particles (PAH), water ice, CO₂ ice and CO ice.
+- **Share a view.** The address bar follows what's on screen (`?target=m45` or
+  `?ra=133.79513&dec=-7.24515`), so a link opens straight to that plate.
 
-## Quick start
+## Targets
+
+All 19 built-in targets are bundled with the app, so they work with no backend.
+
+All use real SPHEREx data.
+
+- **Challenge test targets:** Barnard's Star, Epsilon Indi B, WISE 0855, RW Aurigae,
+  R Draconis
+- **Showcase:** Kapteyn's Star, Luhman 16, M101, M104, M45 Pleiades, M1 Crab Nebula,
+  M16 Pillars of Creation, Horsehead Nebula, Rho Ophiuchi Cloud, Tarantula Nebula,
+  M57 Ring Nebula, Galactic Centre, Omega Centauri, M51 Whirlpool Galaxy
+
+## Quick start (front end only)
 
 Needs Node 20.19 or newer.
 
 ```bash
 npm install
+```
+
+```bash
 npm run dev
 ```
 
-Open http://localhost:5173. It runs entirely on the data in `src/api/mock/`, no backend
-needed.
+Open http://localhost:5173. Every built-in target, Blink and Difference work with just
+this; the data is in `src/api/mock/` and `public/mock/images/`.
+
+## Running everything (three terminals)
+
+Two local Python services add the rest. Without them the app says what's missing and
+carries on.
+
+| Service                      | Adds                                  | Needs                         |
+| ---------------------------- | ------------------------------------- | ----------------------------- |
+| On-demand backend, port 8000 | fetching any RA/Dec (uncharted spots) | Python 3.9+, `pipeline/.venv` |
+| Science service, port 8001   | the Spectral view                     | Python 3.9+, `.venv-science`  |
+
+**Setup (once), from the project root:**
+
+```bash
+python3 -m venv pipeline/.venv
+```
+
+```bash
+pipeline/.venv/bin/pip install -r pipeline/requirements.txt
+```
+
+```bash
+python3 -m venv .venv-science
+```
+
+```bash
+.venv-science/bin/pip install -r science/requirements-py39.txt
+```
+
+Use `science/requirements-py39.txt` on Python 3.9 (the macOS system Python), or
+`science/requirements.txt` on Python 3.11 or newer.
+
+**Run, each in its own terminal:**
+
+```bash
+npm run dev
+```
+
+```bash
+pipeline/.venv/bin/python pipeline/server.py
+```
+
+```bash
+.venv-science/bin/python science/server.py
+```
+
+The Vite dev server forwards `/api` and `/media` to port 8000 and `/science` to port 8001,
+so there's no CORS setup. The first Spectral request for a place takes 30–60 s; after that
+it's cached.
+
+## Commands
 
 | Command          | What it does                                 |
 | ---------------- | -------------------------------------------- |
-| `npm run dev`    | dev server                                   |
+| `npm run dev`    | dev server on port 5173                      |
 | `npm test`       | unit tests (Vitest)                          |
 | `npm run build`  | type-check and production build into `dist/` |
 | `npm run lint`   | oxlint                                       |
 | `npm run format` | Prettier                                     |
-| `npm run mocks`  | regenerate the simulated placeholder SVGs    |
 
-To process real SPHEREx data you also need Python 3.9+; see
-[pipeline/README.md](pipeline/README.md).
-
-### Every feature (three terminals)
-
-The charted targets, Blink and Difference work with `npm run dev` alone. Two local Python
-services add the rest:
-
-| Service                      | Adds                                               | Start it with                                  |
-| ---------------------------- | -------------------------------------------------- | ---------------------------------------------- |
-| On-demand backend, port 8000 | fetching any RA/Dec ("Uncharted spot")             | `pipeline/.venv/bin/python pipeline/server.py` |
-| Science service, port 8001   | the Spectral view (all light, carbon and ice maps) | `.venv-science/bin/python science/server.py`   |
-
-One-time setup for each is in [docs/backend-notes.md](docs/backend-notes.md). Vite forwards
-`/api`, `/media` and `/science` to them; without them the app says so and carries on.
+Processing a new built-in target, scouting a spot's coverage and rebuilding the preview
+report are covered in [pipeline/README.md](pipeline/README.md).
 
 ## How it fits together
 
 ```
 IRSA archive (NASA/IPAC)
-   │  ADQL query + FITS cutouts, ~4 MB each, ~170 per target
+   │  FITS cutouts per exposure, detectors D1, D3, D6
    ▼
-pipeline/  (Python)          group into passes → align north-up → combine → stretch → PNG
-   │  writes public/mock/images/<id>/*.png and src/api/mock/passes/<id>.json
+pipeline/  (Python)       group into passes → align north-up → combine → stretch → PNG
+   │                      built-in targets: run ahead of time into src/api/mock/ and public/mock/
+   │                      uncharted spots: pipeline/server.py runs it on request (port 8000)
    ▼
-src/api/client.ts            VITE_USE_MOCKS=true  → reads src/api/mock/
-   │                         VITE_USE_MOCKS=false → GET /api/... from Django
+src/api/client.ts         loads targets and passes (bundled mock data, or /api)
+src/api/science.ts        loads spectral maps from science/server.py (port 8001,
+   │                      SPHEREx all-sky cube, 102 channels)
    ▼
-src/hooks/useExplorer.ts     all app state
+src/hooks/useExplorer.ts  app state: targets, selection, passes, pass index, play, band
    ▼
-src/components/              what you see
+src/components/           what you see
 ```
 
-The backend's job is to replace the middle step: do what `pipeline/` does ahead of time
-and serve the same JSON shapes. Nothing in the front end changes except `.env`.
-
-### The data contract
-
-Defined in [`src/api/types.ts`](src/api/types.ts), with real examples in `src/api/mock/`.
+The data shapes are defined in [`src/api/types.ts`](src/api/types.ts), with real examples
+in `src/api/mock/`:
 
 ```
 GET /api/targets              -> Target[]          id, messier, name, kind, ra, dec
@@ -106,80 +146,68 @@ GET /api/targets/:id/passes   -> PassesResponse    passes[] (label, date, imageU
 GET /api/colour-key           -> ColourKeyEntry[]  band, colour, label, wavelength
 ```
 
-If you change the contract, update `types.ts`, the mock JSON, `pipeline/to_app.py` and
+The built-in targets read these from the bundled files (`VITE_USE_MOCKS=true` in `.env`);
+set it to `false` to fetch them from a backend instead. The on-demand backend's endpoints
+(`/api/status`, `/api/scout`, `/api/passes?ra=&dec=`) and the science service's
+(`/science/extract`) are documented in [docs/backend-notes.md](docs/backend-notes.md).
+
+If you change a shape, update `types.ts`, the mock JSON, `pipeline/to_app.py` and
 `docs/backend-notes.md` together.
 
 ## Code tour
 
-| File                                        | What it does                                                                 |
-| ------------------------------------------- | ---------------------------------------------------------------------------- |
-| `src/App.tsx`                               | page layout; works out the active band and preloads images                   |
-| `src/hooks/useExplorer.ts`                  | the only state: targets, selection, passes, pass index, play loop, band      |
-| `src/api/client.ts`                         | mock/real switch, fetch helpers, image URL resolving                         |
-| `src/components/TargetBar.tsx`              | dropdown, readouts, and the `SkyChart`                                       |
-| `src/components/SkyChart.tsx`               | whole-sky Hammer projection with ecliptic, Milky Way and clickable targets   |
-| `src/components/SkyPlate.tsx`               | the image, overlays (grid, compass, scale bar, badges) and candidate markers |
-| `src/components/TimelinePanel.tsx`          | pass list, ◀ Play ▶, arrow keys                                              |
-| `src/components/ColourKeyPanel.tsx`         | band switcher and colour key                                                 |
-| `src/components/PlateCaption.tsx`           | the caption and data line under the plate                                    |
-| `src/components/ObservationLog.tsx`         | candidate table                                                              |
-| `src/utils/sky.ts`, `coords.ts`, `bands.ts` | sky maths, coordinate formatting, band image lookup (all tested)             |
-| `src/styles/tokens.css`                     | colours, fonts and spacing; change the look here first                       |
-| `pipeline/`                                 | IRSA query → download → process → app files, plus the preview report         |
+| Path                                 | What it does                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
+| `src/App.tsx`                        | page layout; picks the active view and band, preloads images                          |
+| `src/hooks/useExplorer.ts`           | the main state: targets, selection, passes, pass index, play loop, band               |
+| `src/hooks/useUrlState.ts`           | keeps `?target=` / `?ra=&dec=` in sync with the screen                                |
+| `src/api/client.ts`                  | mock/real switch, fetch helpers, image URL resolving                                  |
+| `src/components/DomeHero.tsx`        | landing dome: sky chart, coordinate entry, planets date slider                        |
+| `src/components/SkyChart.tsx`        | whole-sky Hammer projection with ecliptic, Milky Way, planets and targets             |
+| `src/components/UnchartedSpot.tsx`   | scout and fetch flow for coordinates that aren't a built-in target                    |
+| `src/components/SkyPlate.tsx`        | the image, overlays (grid, compass, scale bar, badges) and candidate marks            |
+| `src/components/ViewSwitch.tsx`      | Blink · Difference · Spectral                                                         |
+| `src/components/TimelinePanel.tsx`   | pass list, ◀ Play ▶, arrow keys                                                       |
+| `src/components/DifferencePanel.tsx` | choose two passes and a detector to subtract                                          |
+| `src/components/SpectralPanel.tsx`   | choose a spectral map; explanation and legend                                         |
+| `src/components/StorySection.tsx`    | the short story cards below the instrument                                            |
+| `src/utils/`                         | pure logic with tests: sky maths, coordinates, planets, differences, spectral drawing |
+| `src/styles/tokens.css`              | colours, fonts and spacing; change the look here first                                |
+| `pipeline/`                          | IRSA query → download → process → app files; scout; on-demand server; report          |
+| `science/`                           | science service: spectral and molecule maps from the all-sky cube                     |
 
 Conventions: strict TypeScript, plain CSS with tokens (no UI library), one CSS file per
-component, Prettier and oxlint must pass, and pure logic goes in `src/utils/` with tests.
+component, Prettier and oxlint must pass, pure logic goes in `src/utils/` with tests.
+Before committing: `npm test && npm run build && npm run lint`.
 
-## Handoff notes
+## Decisions and gotchas
 
-### For the backend
-
-Start with [docs/backend-notes.md](docs/backend-notes.md). In short:
-
-1. Wrap `pipeline/run.py` (or port its steps) in a Django management command that
-   processes a target ahead of time and stores the PNGs under `MEDIA_ROOT`.
-2. Serve the three endpoints above from stored results. **Never call IRSA during a page
-   request**: the query takes up to a minute and some downloads fail every run.
-3. Point the front end at it: `VITE_USE_MOCKS=false` in `.env`, Django on port 8000,
-   restart `npm run dev`. The Vite proxy forwards `/api` and `/media`, so no CORS in dev.
-
-### Decisions already made
-
-- Detectors **D1, D3, D6**; colours blue / cream / amber (colour-blind friendly).
+- Detectors **D1, D3, D6**, coloured blue / cream / amber (colour-blind friendly).
 - Square 0.1° field, requested at **0.15°** so rotated corners stay filled.
 - Passes split at gaps of more than 30 days; under 20 exposures or 3 days is a
-  **short visit**.
-- One stretch per target across all passes, so brightness doesn't flicker.
-
-### Things that will trip you up
-
-- **IRSA returns HTTP 503 on a few downloads most runs.** `run.py` retries; just rerun.
-- **Raw data is big**: 0.6–0.8 GB per target. `pipeline/data/` is git-ignored.
-- **Medians hide fast movers**, and plain difference images flag every bright star. See
-  [docs/spherex-findings.md](docs/spherex-findings.md) before building mover detection.
-- **Real images are 116 px across.** They look soft when enlarged; that's the true
+  **short visit**. One brightness stretch per target, so passes don't flicker.
+- **Real images are 116 px across.** They look soft enlarged; that's SPHEREx's true
   resolution, not a bug.
+- **IRSA refuses a few downloads (HTTP 503) most runs.** The pipeline retries; rerun if
+  needed. Raw data is 0.6–0.8 GB per target and lives in git-ignored `pipeline/data/`.
+- **Never call IRSA's slow query during a page request** for built-in targets; process
+  them ahead of time. Uncharted spots run as background jobs the app polls.
+- **Spectral maps can't change between passes**: the all-sky cube stacks every visit.
 
-### What's next
+## Known limits and what's next
 
-- Design pass: landing page with the sky chart as an observatory dome, a short story
-  section, less text (ideas in progress, to be tried on a branch).
-- Flip through single exposures within a pass (where asteroids actually show up).
-- Known-asteroid demo: cut out the sky where e.g. Vesta was, for a guaranteed mover.
-- Process M31, M42 and M51 so every target is real.
-- Finish the accessibility and responsive pass (`plan.md` task 10).
-
-## Working on it
-
-- `main` is always the working version. `v0.1-mvp` marks the first complete MVP.
-- Try ideas on a branch: `git switch -c design-experiments`. Merge it if it works,
-  delete it if it doesn't.
-- Before committing: `npm test && npm run build && npm run lint`.
+- **No automatic mover detection yet.** Medians hide fast movers, and plain differences
+  flag every bright star; see [docs/spherex-findings.md](docs/spherex-findings.md).
+- Spots near the north ecliptic pole fail: only detectors D2 and D5 are released there.
+- Both Python services are local-only demos (no authentication, no disk limit).
+- Ideas: flip through single exposures within a pass (where asteroids show up), a
+  known-asteroid demo, overlay Gaia DR3.
 
 ## More docs
 
-- [docs/backend-notes.md](docs/backend-notes.md): building the backend, step by step
+- [docs/backend-notes.md](docs/backend-notes.md): the data contract, on-demand backend
+  and science service in detail
 - [docs/spherex-findings.md](docs/spherex-findings.md): what the real data taught us
-- [pipeline/README.md](pipeline/README.md): running the Python pipeline
-- [plan.md](plan.md): the original front-end plan and task list
-- `docs/reference/`: the IRSA notebook the query came from
+- [pipeline/README.md](pipeline/README.md): running the Python pipeline and scout
+- [plan.md](plan.md): the original front-end plan
+- `docs/reference/`: the challenge brief and the IRSA notebook the query came from

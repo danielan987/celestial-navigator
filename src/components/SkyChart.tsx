@@ -107,9 +107,6 @@ const DRAW_ORDER: BodyId[] = [
   'mercury',
 ]
 
-// Messier objects go by their number ("M45"); anything else by its everyday name
-const chartLabel = (t: Target) => (/^M\d/.test(t.messier) ? t.messier : t.name)
-
 const describeLatitude = (lat: number) =>
   Math.abs(lat) < 0.5
     ? 'on the ecliptic'
@@ -314,7 +311,7 @@ export default function SkyChart({
               >
                 <span className="sky-chart__dot" aria-hidden="true" />
                 <span className="sky-chart__name" aria-hidden="true">
-                  {chartLabel(target)}
+                  {target.name}
                 </span>
               </button>
             )

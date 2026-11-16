@@ -9,11 +9,11 @@ const full: Pass = {
   imageUrl: '/p1.png',
   bandImageUrls: { D1: '/p1-d1.png', D6: '/p1-d6.png' },
 }
-const simulated: Pass = {
+const colourOnly: Pass = {
   id: 'p2',
   label: 'Pass II',
   date: '2026-01-02T00:00:00Z',
-  imageUrl: '/p2.svg',
+  imageUrl: '/p2.png',
 }
 
 describe('imageForBand', () => {
@@ -24,13 +24,13 @@ describe('imageForBand', () => {
   it('picks the single-detector image, or null when the visit lacks it', () => {
     expect(imageForBand(full, 'D6')).toBe('/p1-d6.png')
     expect(imageForBand(full, 'D3')).toBeNull()
-    expect(imageForBand(simulated, 'D1')).toBeNull()
+    expect(imageForBand(colourOnly, 'D1')).toBeNull()
   })
 })
 
 describe('hasBandImages', () => {
-  it('is false for simulated targets', () => {
-    expect(hasBandImages([simulated])).toBe(false)
-    expect(hasBandImages([simulated, full])).toBe(true)
+  it('is false when no pass has single-detector images', () => {
+    expect(hasBandImages([colourOnly])).toBe(false)
+    expect(hasBandImages([colourOnly, full])).toBe(true)
   })
 })

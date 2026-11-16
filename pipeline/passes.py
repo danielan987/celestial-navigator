@@ -1,16 +1,21 @@
 # How exposures are grouped into passes. Shared by process.py and scout.py.
-from config import PASS_GAP_DAYS
+from config import MAX_PASS_DAYS, PASS_GAP_DAYS
 
 SHORT_VISIT_IMAGES = 20  # fewer exposures than this...
 SHORT_VISIT_DAYS = 3  # ...or a span shorter than this makes a "short visit"
 
 
 def group_by_gap(items, key=lambda x: x["mjd"]):
-    """Sort by time and split wherever consecutive exposures are PASS_GAP_DAYS or more apart."""
+    """Sort by time and split wherever consecutive exposures are PASS_GAP_DAYS or more apart,
+    or where a pass would otherwise run past MAX_PASS_DAYS."""
     items = sorted(items, key=key)
     groups = []
     for item in items:
-        if groups and key(item) - key(groups[-1][-1]) < PASS_GAP_DAYS:
+        if (
+            groups
+            and key(item) - key(groups[-1][-1]) < PASS_GAP_DAYS
+            and key(item) - key(groups[-1][0]) < MAX_PASS_DAYS
+        ):
             groups[-1].append(item)
         else:
             groups.append([item])

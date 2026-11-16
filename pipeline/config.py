@@ -34,6 +34,10 @@ FIELD_DEG = 0.1  # the square field shown in the app
 REQUEST_SIZE = float(os.environ.get("REQUEST_SIZE", "0.15"))
 
 PASS_GAP_DAYS = 30  # exposures closer together than this belong to the same pass
+# ...but no pass runs longer than this. Near the ecliptic poles SPHEREx looks every few days,
+# so there's never a 30-day gap (the Tarantula's 250 days would be one pass). Normal passes
+# last 1 to 8 weeks.
+MAX_PASS_DAYS = 100
 
 # Per-target stretch overrides: (asinh strength, percentile mapped to white).
 # Bright, frame-filling objects wash out with the default.

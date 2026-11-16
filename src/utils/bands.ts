@@ -7,5 +7,5 @@ export function imageForBand(pass: Pass, band: string | null): string | null {
   return pass.bandImageUrls?.[band] ?? null
 }
 
-// Simulated targets only have colour images, so the band switcher is off for them.
+// Without single-detector images the band switcher (and the Difference view) is off.
 export const hasBandImages = (passes: Pass[]) => passes.some((p) => p.bandImageUrls)

@@ -9,7 +9,6 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "format": "prettier --write .",
-    "mocks": "node scripts/generate-mock-images.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

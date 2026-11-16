@@ -94,6 +94,9 @@ export function useExplorer() {
 
   const [passIndex, setPassIndexState] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  // True when a new plate has opened and the user hasn't touched the controls yet:
+  // the page starts the blink by itself once the frames have loaded.
+  const [autoplayArmed, setAutoplayArmed] = useState(false)
   const [colourKey, setColourKey] = useState<ColourKeyEntry[]>([])
   // Coordinates someone typed that don't match a processed target (null otherwise)
   const [customSpot, setCustomSpot] = useState<SkySpot | null>(null)
@@ -186,6 +189,7 @@ export function useExplorer() {
             setPassesData(result.data)
             setPassesStatus('ready')
             setSpotFetch({ status: 'ready' })
+            setAutoplayArmed(true)
             return
           }
           if (result.state === 'failed') {
@@ -262,6 +266,7 @@ export function useExplorer() {
   const selectTarget = useCallback((id: string) => {
     setCustomSpot(null)
     setIsPlaying(false)
+    setAutoplayArmed(true)
     setPassIndexState(0)
     setComparison(null)
     setPassesData(null)
@@ -278,6 +283,7 @@ export function useExplorer() {
         return
       }
       setIsPlaying(false)
+      setAutoplayArmed(false)
       setSelectedId(null)
       setPassesData(null)
       setSpotScout({ status: 'loading' })
@@ -291,6 +297,7 @@ export function useExplorer() {
   const setPassIndex = useCallback(
     (i: number) => {
       setIsPlaying(false)
+      setAutoplayArmed(false)
       if (passCount > 0) setPassIndexState(((i % passCount) + passCount) % passCount)
     },
     [passCount],
@@ -300,12 +307,23 @@ export function useExplorer() {
 
   const setView = useCallback((v: PlateView) => {
     setIsPlaying(false)
+    setAutoplayArmed(false)
     setViewState(v)
   }, [])
 
-  const play = useCallback(() => setIsPlaying(true), [])
-  const pause = useCallback(() => setIsPlaying(false), [])
-  const togglePlay = useCallback(() => setIsPlaying((p) => !p), [])
+  // Any press of play/pause counts as taking control, so autoplay won't kick in afterwards.
+  const play = useCallback(() => {
+    setAutoplayArmed(false)
+    setIsPlaying(true)
+  }, [])
+  const pause = useCallback(() => {
+    setAutoplayArmed(false)
+    setIsPlaying(false)
+  }, [])
+  const togglePlay = useCallback(() => {
+    setAutoplayArmed(false)
+    setIsPlaying((p) => !p)
+  }, [])
 
   const retryTargets = useCallback(() => {
     setTargetsStatus('loading')
@@ -336,6 +354,7 @@ export function useExplorer() {
     next,
     prev,
     isPlaying,
+    autoplayArmed,
     play,
     pause,
     togglePlay,

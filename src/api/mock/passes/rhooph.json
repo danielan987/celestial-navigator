@@ -1,0 +1,41 @@
+{
+  "_source": "REAL SPHEREx data: IRSA cutouts in D1/D3/D6, median-combined per visit, reprojected north-up (requested at 0.15°). Dates are each visit's mean observation date. Made by pipeline/to_app.py. No candidate movers yet.",
+  "targetId": "rhooph",
+  "fieldSizeDeg": 0.1,
+  "passes": [
+    {
+      "id": "rhooph-pass-1",
+      "label": "Pass I",
+      "date": "2025-08-12T00:00:00Z",
+      "imageUrl": "/mock/images/rhooph/pass-1.png",
+      "bandImageUrls": {
+        "D1": "/mock/images/rhooph/pass-1-d1.png",
+        "D3": "/mock/images/rhooph/pass-1-d3.png",
+        "D6": "/mock/images/rhooph/pass-1-d6.png"
+      }
+    },
+    {
+      "id": "rhooph-pass-2",
+      "label": "Pass II",
+      "date": "2026-03-03T00:00:00Z",
+      "imageUrl": "/mock/images/rhooph/pass-2.png",
+      "bandImageUrls": {
+        "D1": "/mock/images/rhooph/pass-2-d1.png",
+        "D3": "/mock/images/rhooph/pass-2-d3.png",
+        "D6": "/mock/images/rhooph/pass-2-d6.png"
+      }
+    },
+    {
+      "id": "rhooph-pass-3",
+      "label": "Short visit",
+      "date": "2026-04-10T00:00:00Z",
+      "imageUrl": "/mock/images/rhooph/pass-3.png",
+      "bandImageUrls": {
+        "D3": "/mock/images/rhooph/pass-3-d3.png",
+        "D6": "/mock/images/rhooph/pass-3-d6.png"
+      },
+      "short": true
+    }
+  ],
+  "candidates": []
+}

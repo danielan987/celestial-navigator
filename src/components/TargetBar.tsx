@@ -37,6 +37,8 @@ export default function TargetBar({
       'From the ecliptic',
       formatDegrees(eclipticLatitude(selectedTarget.ra, selectedTarget.dec), true, 1),
     ],
+    // Almanac fact, for built-in targets only
+    ...(selectedTarget.type ? [['Type', selectedTarget.type]] : []),
     ['Passes on file', passes ? describePasses(passes) : '—'],
   ]
 
