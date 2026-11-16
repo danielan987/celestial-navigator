@@ -56,9 +56,13 @@ def fetch(i, row, attempts=5):
     return {**row, "error": last}
 
 
+print("@@stage download", flush=True)
 t = time.time()
 with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
-    results = list(ex.map(lambda a: fetch(*a), enumerate(rows)))
+    futures = [ex.submit(fetch, i, row) for i, row in enumerate(rows)]
+    for n, _ in enumerate(concurrent.futures.as_completed(futures), 1):
+        print(f"@@progress {n} {len(rows)}", flush=True)  # read by server.py
+    results = [f.result() for f in futures]
 ok = [r for r in results if "error" not in r]
 bad = [r for r in results if "error" in r]
 print(f"downloaded {len(ok)}/{len(results)} in {time.time() - t:.0f}s, "

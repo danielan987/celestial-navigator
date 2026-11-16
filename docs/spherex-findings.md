@@ -56,6 +56,20 @@ Lessons: faint, cold objects need D6 and a stretch tuned for them; saturated var
 brightness measured from the wings, not the core; and the colour image can hide what one
 band shows clearly.
 
+## What scouting showed (`pipeline/scout.py`, 15 Nov 2026)
+
+- **Detectors work in pairs.** D1 and D4, D2 and D5, D3 and D6 always have matching image
+  counts: each pair sees the same patch of sky at the same moment, through a beam splitter.
+  So D3 and D6 are taken together, but D1 is taken at a different time.
+- **Away from the poles that doesn't matter**: all three pairs cross a target within the
+  same few weeks. **Near the ecliptic pole it does**: R Draconis (+81°) gets a "pass" with
+  only D1 and others with only D3 + D6, so their colour images are missing bands.
+- **The north ecliptic pole has ~220 images, all in D2/D5 and none in D1, D3 or D6.** A
+  fixed D1/D3/D6 choice shows nothing there. The tool should pick, per spot, one detector
+  from the short-wave pairs and one from the long-wave pairs that actually have data.
+- High ecliptic latitudes get more visits (Lockman Hole 186 images, R Draconis 208, versus
+  about 115 near the ecliptic), and about 5–10% of cutouts reach past an image edge.
+
 ## Processing lessons
 
 - **Detectors work in pairs** (D1+D4, D2+D5, D3+D6): each pair sees the same sky at the

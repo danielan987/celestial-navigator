@@ -11,7 +11,7 @@ import ViewSwitch from './components/ViewSwitch'
 import ObservationLog from './components/ObservationLog'
 import StorySection from './components/StorySection'
 import UnchartedSpot from './components/UnchartedSpot'
-import { defaultComparison, nearestTarget, useExplorer } from './hooks/useExplorer'
+import { defaultComparison, nearestTarget, spotAsTarget, useExplorer } from './hooks/useExplorer'
 import { useDifferenceImage } from './hooks/useDifferenceImage'
 import { usePreloadImages } from './hooks/usePreloadImages'
 import { useUrlState } from './hooks/useUrlState'
@@ -25,6 +25,9 @@ export default function App() {
   const takeOpenedFromUrl = useUrlState(explorer)
   const selected = explorer.selectedTarget
   const spot = explorer.customSpot
+  // What's on the plate: a charted target, or an uncharted spot once its passes are fetched
+  const plateTarget =
+    selected ?? (spot && explorer.spotFetch.status === 'ready' ? spotAsTarget(spot) : null)
   const passes = explorer.passesData?.passes ?? []
   // The chosen band applies only where single-detector images exist (not simulated targets).
   const bandsAvailable = hasBandImages(passes)
@@ -68,21 +71,25 @@ export default function App() {
       />
 
       <main>
-        {spot && (
+        {spot && !plateTarget && (
           <div className="instrument" id="instrument">
             <UnchartedSpot
               spot={spot}
               nearest={nearestTarget(explorer.targets, spot)}
+              scout={explorer.spotScout}
+              fetch={explorer.spotFetch}
+              onFetch={(retry) => void explorer.fetchSpot(retry)}
+              onRetryScout={explorer.retrySpot}
               onSelect={explorer.selectTarget}
               onBackToSky={() => scrollToSection('dome')}
             />
           </div>
         )}
-        {selected && (
+        {plateTarget && (
           <div className="instrument" id="instrument">
             <TargetBar
               targets={explorer.targets}
-              selectedTarget={selected}
+              selectedTarget={plateTarget}
               passes={explorer.passesStatus === 'ready' ? passes : null}
               onSelect={explorer.selectTarget}
               onBackToSky={() => scrollToSection('dome')}
@@ -97,7 +104,7 @@ export default function App() {
                   />
                 )}
                 <SkyPlate
-                  target={selected}
+                  target={plateTarget}
                   passesData={explorer.passesData}
                   passesStatus={explorer.passesStatus}
                   passIndex={explorer.passIndex}
@@ -114,7 +121,7 @@ export default function App() {
                   onRetry={explorer.retryPasses}
                 />
                 <PlateCaption
-                  target={selected}
+                  target={plateTarget}
                   passesData={explorer.passesData}
                   passIndex={explorer.passIndex}
                   colourKey={explorer.colourKey}
@@ -125,7 +132,7 @@ export default function App() {
               <aside className="side-column" aria-label="Timeframes and colour key">
                 {showDifference && comparison ? (
                   <DifferencePanel
-                    key={selected.id}
+                    key={plateTarget.id}
                     passes={passes}
                     bands={explorer.colourKey.map((c) => c.band)}
                     comparison={comparison}
@@ -153,7 +160,7 @@ export default function App() {
                 )}
               </aside>
             </div>
-            <ObservationLog target={selected} passesData={explorer.passesData} />
+            <ObservationLog target={plateTarget} passesData={explorer.passesData} />
           </div>
         )}
 

@@ -1,6 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
-import { getColourKey, getPasses, getTargets } from '../api/client'
-import type { ColourKeyEntry, Pass, PassesResponse, Target } from '../api/types'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  BackendOfflineError,
+  fetchSpotPasses,
+  getColourKey,
+  getPasses,
+  getTargets,
+  scoutSpot,
+  spotStatus,
+} from '../api/client'
+import type { ColourKeyEntry, Pass, PassesResponse, SpotJob, SpotScout, Target } from '../api/types'
 import { angularSeparation } from '../utils/sky'
 
 export type LoadStatus = 'loading' | 'ready' | 'error'
@@ -31,6 +39,36 @@ const PLAY_INTERVAL_MS = 800
 export const MATCH_RADIUS_DEG = 0.1
 
 export type SkySpot = { ra: number; dec: number }
+
+const SPOT_POLL_MS = 2000
+
+// What SPHEREx has at an uncharted spot (asked of the backend as soon as the spot opens)
+export type SpotScoutState =
+  | { status: 'loading' }
+  | { status: 'ready'; scout: SpotScout }
+  | { status: 'offline' } // backend not running
+  | { status: 'error'; message: string }
+
+// Fetching and processing an uncharted spot's images
+export type SpotFetchState =
+  | { status: 'idle' }
+  | { status: 'processing'; job: SpotJob }
+  | { status: 'ready' }
+  | { status: 'offline' }
+  | { status: 'failed'; message: string; permanent?: boolean }
+
+// A processed spot stands in for a target on the plate. messier is empty: that's how
+// components tell a spot from a catalogued target.
+export function spotAsTarget(spot: SkySpot): Target {
+  return {
+    id: `spot_${spot.ra.toFixed(4)}_${spot.dec.toFixed(4)}`,
+    messier: '',
+    name: 'Uncharted spot',
+    kind: 'patch of sky chosen by its coordinates',
+    ra: spot.ra,
+    dec: spot.dec,
+  }
+}
 
 // The closest target to a spot, and how far away it is in degrees
 export function nearestTarget(targets: Target[], spot: SkySpot) {
@@ -63,6 +101,10 @@ export function useExplorer() {
   const [view, setViewState] = useState<PlateView>('blink')
   // null = the default for the target (defaultComparison); set by the Show button
   const [comparison, setComparison] = useState<Comparison | null>(null)
+  const [spotScout, setSpotScout] = useState<SpotScoutState>({ status: 'loading' })
+  const [spotFetch, setSpotFetch] = useState<SpotFetchState>({ status: 'idle' })
+  // Bumped whenever the spot changes, so a poll loop for an old spot stops
+  const spotRun = useRef(0)
 
   const selectedTarget = targets.find((t) => t.id === selectedId) ?? null
   const passCount = passesData?.passes.length ?? 0
@@ -125,6 +167,97 @@ export function useExplorer() {
     return () => clearInterval(timer)
   }, [isPlaying, passCount, selectedId])
 
+  // Fetch (or keep polling) the current spot's passes until they're ready or fail.
+  const fetchSpot = useCallback(
+    async (retry = false) => {
+      if (!customSpot) return
+      const run = ++spotRun.current
+      setSpotFetch({ status: 'processing', job: { status: 'processing', stage: 'starting' } })
+      let again = retry
+      while (run === spotRun.current) {
+        try {
+          const result = await fetchSpotPasses(customSpot.ra, customSpot.dec, again)
+          again = false
+          if (run !== spotRun.current) return
+          if (result.state === 'ready') {
+            setPassIndexState(0)
+            setComparison(null)
+            setPassesData(result.data)
+            setPassesStatus('ready')
+            setSpotFetch({ status: 'ready' })
+            return
+          }
+          if (result.state === 'failed') {
+            setSpotFetch({
+              status: 'failed',
+              message: result.message,
+              permanent: result.permanent,
+            })
+            return
+          }
+          setSpotFetch({ status: 'processing', job: result.job })
+        } catch (e) {
+          if (run !== spotRun.current) return
+          setSpotFetch(
+            e instanceof BackendOfflineError
+              ? { status: 'offline' }
+              : { status: 'failed', message: 'Something went wrong.' },
+          )
+          return
+        }
+        await new Promise((resolve) => setTimeout(resolve, SPOT_POLL_MS))
+      }
+    },
+    [customSpot],
+  )
+
+  // A new spot: check (instantly) whether it's processed or being processed already, and if
+  // so carry straight on, so repeat visits and shared links open the plate without a click.
+  // Meanwhile ask what SPHEREx has there, for the summary (this calls IRSA, so it's slower).
+  useEffect(() => {
+    if (!customSpot) return
+    const runs = spotRun // stops any poll loop for the previous spot
+    runs.current++
+    let cancelled = false
+    spotStatus(customSpot.ra, customSpot.dec)
+      .then((job) => {
+        if (cancelled) return
+        if (job.status === 'ready' || job.status === 'processing') void fetchSpot()
+        else if (job.status === 'failed')
+          setSpotFetch({
+            status: 'failed',
+            message: job.message ?? 'Something went wrong.',
+            permanent: job.permanent,
+          })
+      })
+      .catch(() => {
+        // The scout below reports a backend that isn't running.
+      })
+    scoutSpot(customSpot.ra, customSpot.dec)
+      .then((scout) => {
+        if (!cancelled) setSpotScout({ status: 'ready', scout })
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return
+        setSpotScout(
+          e instanceof BackendOfflineError
+            ? { status: 'offline' }
+            : { status: 'error', message: e instanceof Error ? e.message : String(e) },
+        )
+      })
+    return () => {
+      cancelled = true
+      runs.current++
+    }
+  }, [customSpot, fetchSpot])
+
+  // Ask about the same spot again (after starting the backend, say)
+  const retrySpot = useCallback(() => {
+    setSpotScout({ status: 'loading' })
+    setSpotFetch({ status: 'idle' })
+    setCustomSpot((s) => s && { ...s })
+  }, [])
+
   const selectTarget = useCallback((id: string) => {
     setCustomSpot(null)
     setIsPlaying(false)
@@ -146,6 +279,8 @@ export function useExplorer() {
       setIsPlaying(false)
       setSelectedId(null)
       setPassesData(null)
+      setSpotScout({ status: 'loading' })
+      setSpotFetch({ status: 'idle' })
       setCustomSpot(spot)
     },
     [targets, selectTarget],
@@ -188,6 +323,10 @@ export function useExplorer() {
     selectTarget,
     customSpot,
     goToCoordinates,
+    spotScout,
+    spotFetch,
+    fetchSpot,
+    retrySpot,
     passesData,
     passesStatus,
     retryPasses,

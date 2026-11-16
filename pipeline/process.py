@@ -12,7 +12,7 @@ from PIL import Image
 from scipy import ndimage
 from reproject import reproject_interp
 
-from config import BANDS, COLOURS, FIELD_DEG, REQUEST_SIZE, STRETCH, load_target
+from config import BANDS, COLOURS, FIELD_DEG, REQUEST_SIZE, STRETCH, is_spot, load_target
 from passes import group_passes, is_short
 
 
@@ -29,10 +29,17 @@ SIZE = FIELD_DEG  # output grid; cutouts are requested larger and cropped by the
 PIX_ARCSEC = 3.1  # 2x finer than SPHEREx's ~6.2" pixels, for a smoother display
 N = int(round(SIZE * 3600 / PIX_ARCSEC))  # 116
 OUT = "out"
-for d in ["raw", "aligned", "colour", "frames", "diff"]:
+# Spots skip the raw samples and frame-by-frame flipbook (report only, not used by the app).
+EXTRAS = not is_spot(T)
+for d in ["aligned", "colour", "diff"] + (["raw", "frames"] if EXTRAS else []):
     os.makedirs(f"{OUT}/{d}", exist_ok=True)
 
+print("@@stage process", flush=True)
 cutouts = [c for c in json.load(open("cutouts.json")) if "error" not in c]
+if not cutouts:
+    print("!! None of this spot's images could be downloaded from IRSA. Try again in a few "
+          "minutes.", flush=True)
+    raise SystemExit(1)
 
 # Target grid: TAN projection centred on the target, north up, east left.
 target = WCS(naxis=2)
@@ -107,9 +114,17 @@ combined = {k: fill_holes(np.nanmedian(np.array(v), axis=0)) for k, v in stack.i
 # Stretch limits per band, shared by all passes so brightness doesn't flicker.
 limits = {}
 for b in BANDS:
-    allpix = np.concatenate([combined[(pi, b)].ravel() for pi in range(len(passes)) if (pi, b) in combined])
+    parts = [combined[(pi, b)].ravel() for pi in range(len(passes)) if (pi, b) in combined]
+    allpix = np.concatenate(parts) if parts else np.array([])
     allpix = allpix[np.isfinite(allpix)]
+    if allpix.size == 0:  # this band never covers the field: leave it out everywhere
+        for pi in range(len(passes)):
+            combined.pop((pi, b), None)
+        continue
     limits[b] = (np.percentile(allpix, 5), np.percentile(allpix, HI_PCT))
+if not limits:
+    print("!! The downloaded images don't cover this spot. Try again in a few minutes.", flush=True)
+    raise SystemExit(1)
 
 # Short visits (a day or so, few images) get their own label instead of a pass number.
 labels, n = [], 0
@@ -170,7 +185,7 @@ for pi in range(1, len(passes)):
 # Raw samples: what single cutouts look like straight from IRSA (native orientation).
 # Plus every aligned D3 exposure in time order, for a frame-by-frame flipbook.
 raw_meta, frame_meta = [], []
-for pi, group in enumerate(passes):
+for pi, group in enumerate(passes if EXTRAS else []):
     d3 = [c for c in group if c["band"] == "SPHEREx-D3"]
     picks = sorted({0, len(d3) // 2, len(d3) - 1}) if d3 else []
     for k, c in enumerate(d3[i] for i in picks):

@@ -52,6 +52,9 @@ export default function TargetBar({
           value={selectedTarget.id}
           onChange={(e) => onSelect(e.target.value)}
         >
+          {!targets.some((t) => t.id === selectedTarget.id) && (
+            <option value={selectedTarget.id}>{selectedTarget.name}</option>
+          )}
           {targets.map((t) => (
             <option key={t.id} value={t.id}>
               {t.messier} · {t.name}

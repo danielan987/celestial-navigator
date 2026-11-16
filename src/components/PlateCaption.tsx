@@ -69,9 +69,12 @@ export default function PlateCaption({
   return (
     <div className="plate-caption">
       <p className="plate-caption__text">
-        Plate {passIndex + 1}. The field around {withThe(target.name)} ({target.messier}),{' '}
-        {withArticle(target.kind)}, shown at {lowerFirst(pass.label)} ({passIndex + 1} of {total}).
-        Distant stars and galaxies stay fixed; anything nearer that moves will shift between passes.
+        Plate {passIndex + 1}.{' '}
+        {target.messier
+          ? `The field around ${withThe(target.name)} (${target.messier}), ${withArticle(target.kind)},`
+          : 'The field at the spot you entered,'}{' '}
+        shown at {lowerFirst(pass.label)} ({passIndex + 1} of {total}). Distant stars and galaxies
+        stay fixed; anything nearer that moves will shift between passes.
         {band && ` Showing detector ${band.band} alone (${band.wavelength}), in greyscale.`}
         {passesData.simulated && ' These are simulated placeholder images, not SPHEREx data yet.'}
       </p>

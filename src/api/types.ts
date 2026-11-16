@@ -49,3 +49,46 @@ export type ColourKeyEntry = {
   label: string // "Shortest band (D1)"
   wavelength: string // "~0.9 µm": median wavelength at the target across that detector's images
 }
+
+// ---- Uncharted spots: the on-demand backend (pipeline/server.py) ----
+
+// Where processing a spot stands. "none" = never started (or failed long ago).
+export type SpotJob = {
+  status: 'none' | 'processing' | 'ready' | 'failed'
+  stage?: string // "queued" | "starting" | "query" | "download" | "process" | "publish"
+  stageLabel?: string // the stage in plain words, for the screen
+  progress?: number // 0–1
+  downloaded?: number
+  toDownload?: number
+  message?: string // why it failed, in plain words
+  permanent?: boolean // failed in a way trying again won't fix (no images in our detectors)
+}
+
+export type SpotVisit = {
+  label: string // "Pass 1" or "Short visit"
+  short: boolean
+  start: string // YYYY-MM-DD
+  end: string
+  days: number
+  images: number
+  perBand: Record<string, number> // "D1" -> count
+}
+
+// GET /api/scout?ra=&dec=: what SPHEREx has at a spot, before anything is downloaded
+export type SpotScout = {
+  id: string // "spot_161.2500_58.0000"
+  ra: number
+  dec: number
+  eclipticLat: number
+  galacticLat: number
+  imagesByDetector: Record<string, number> // all six detectors, "D1".."D6"
+  images: number // in the three detectors the app uses (D1, D3, D6)
+  visits: SpotVisit[]
+  passes: number
+  shortVisits: number
+  notes: string[] // technical warnings
+  downloadCount: number // photos a fetch downloads (at most 8 per detector per pass)
+  downloadMB: number
+  estimateSeconds: number
+  job: SpotJob
+}

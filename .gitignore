@@ -25,5 +25,5 @@ dist-ssr
 
 # SPHEREx pipeline: raw cutouts and outputs (re-creatable), Python env
 pipeline/data/
-pipeline/.venv/
+pipeline/.venv
 __pycache__/

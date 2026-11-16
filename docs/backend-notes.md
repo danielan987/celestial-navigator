@@ -67,6 +67,74 @@ takes up to a minute per detector and some downloads fail every run.
 | `ColourKeyEntry.wavelength`   | median measured wavelength per detector, e.g. "~0.9 µm"                                                                                         |
 | `ColourKeyEntry.band`         | detector id, `"D1"`, matching the `bandImageUrls` keys                                                                                          |
 
+## On-demand backend: any coordinates (built)
+
+The challenge's core ask: type any RA/Dec and see that patch of sky as a blinkable series.
+`pipeline/server.py` does it with the Python standard library and the pipeline's own
+environment, no new dependencies. Built-in targets stay bundled in the front end (instant,
+and they work with no backend at all); only uncharted spots use the backend.
+
+**Run it** (two terminals, from the project root):
+
+```bash
+pipeline/.venv/bin/python pipeline/server.py
+```
+
+```bash
+npm run dev
+```
+
+The Vite dev server already forwards `/api` and `/media` to port 8000. Keep
+`VITE_USE_MOCKS=true`: that switch only affects the built-in targets.
+
+**What happens when someone types new coordinates**
+
+1. The app opens the "Uncharted spot" panel and asks `GET /api/status` (instant) whether the
+   spot is processed already; if it is, the plate opens straight away.
+2. It also asks `GET /api/scout` what SPHEREx has there (an IRSA image search, 1–90 s
+   depending on IRSA's mood). The panel shows "Photographed 101 times · 3 visits you could
+   blink between · about 2 minutes to fetch", the visits, and technical notes folded away.
+   The image list is saved, so fetching doesn't have to ask IRSA again.
+3. "Fetch this spot" calls `GET /api/passes`, which starts `run.py` for the spot in its own
+   process and answers 202 with the stage and progress until it's done, then 200 with a
+   normal `PassesResponse` whose images are under `/media/<spot id>/`.
+
+| Endpoint                     | Answers                                                                                                                                                     |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/health`            | `{"ok": true}`                                                                                                                                              |
+| `GET /api/status?ra=&dec=`   | `{"status": "none" / "processing" / "ready" / "failed", ...}`, never starts a job                                                                           |
+| `GET /api/scout?ra=&dec=`    | the scout summary (`SpotScout` in `src/api/types.ts`); 503 if IRSA is down                                                                                  |
+| `GET /api/passes?ra=&dec=`   | 200 `PassesResponse`, 202 `{status: "processing", stage, stageLabel, progress}`, 500 `{status: "failed", message, permanent}`; `&retry=1` retries a failure |
+| `GET /media/<spot id>/*.png` | the plates                                                                                                                                                  |
+
+**Rules:** a spot's id is its position rounded to 0.0001° (`spot_150.1000_2.2000`). At most
+two spots process at once (others wait as "queued"), never the same spot twice at once.
+Results are cached forever in `pipeline/data/media/<id>/` (git-ignored); delete a folder to
+redo a spot. A failed spot is retried automatically after 10 minutes, or straight away with
+"Try again", except permanent failures (no images in D1/D3/D6). Restarting the server
+forgets running jobs; asking again restarts them.
+
+**Speed:** a spot keeps at most 8 exposures per detector per pass (evenly spaced in time;
+`SPOT_MAX_PER_BAND`), about 48 cutouts and 190 MB, so a new spot takes 1.5–2 minutes
+instead of 5–10. The median of 8 is still clean. The raw samples and frame-by-frame
+flipbook that `build_report.py` uses are skipped for spots.
+
+**IRSA:** spots use IRSA's image search (SIA), retried 5 times a minute apart. Its query
+service (TAP) lists newer quick-release images but takes about a minute per detector and
+has been down for hours; set `SPOT_TRY_TAP=1` to try it (a failure is then remembered for
+10 minutes and skipped). TAP is only used when no scout listing is saved.
+
+**Logs:** every run appends to `pipeline/data/spots/<id>/log.txt`, the failure log to
+review afterwards. A failed spot also has `failed.json` with the message the app showed.
+Pipeline lines starting `!! ` are the plain-words reasons the app shows; `@@stage` and
+`@@progress` lines are how the server follows progress.
+
+**Known limits:** near the north ecliptic pole only detectors D2 and D5 have released
+images, so those spots fail with a clear message (choosing detectors per spot would fix
+it). Data Release 1 only (via SIA). Single machine, local only: the server listens on
+127.0.0.1 and has no authentication or disk limit, fine for the demo, not for the open
+internet.
+
 ## Decided
 
 - **Detectors:** D1, D3, D6 for a wide spread across 0.75–5 µm.
@@ -75,24 +143,13 @@ takes up to a minute per detector and some downloads fail every run.
 - **Images:** square PNGs, 116 px (the real resolution, scaled up by the browser).
 - **Data releases:** some exposures appear twice (`l2b` and `l2b_retry`); keep one.
 - **Input safety:** the ADQL is built with an f-string. Only ever fill it from our own
-  target list, never from raw user input.
+  target list or a spot id (`spot_<ra>_<dec>`, checked by a strict regex in
+  `config.parse_spot_id`, so it can only hold numbers), never from raw user input.
 
 ## Open
 
 - **Mover detection.** Medians remove anything that moves within a pass, and plain
   differences flag every bright star. See spherex-findings.md for what a detector needs.
-- **Any coordinates (the challenge's core ask).** The front end already accepts typed RA/Dec
-  and `?ra=&dec=` links; today it can only show processed targets. Proposed endpoint:
-
-  ```
-  GET /api/passes?ra=133.79513&dec=-7.24515
-    200 -> PassesResponse            already processed (cache hit)
-    202 -> { "status": "processing", "etaSeconds": 300 }   queued; poll again
-  ```
-
-  Process on demand with the pipeline steps, cache by rounded position (e.g. 0.01°),
-  and keep the curated targets pre-processed so the demo never waits.
-
 - **Fast movers need today's position.** Barnard's Star, Epsilon Indi B and WISE 0855
   move arcseconds per year, so catalogue (J2000) positions are several arcminutes off.
   Propagate with proper motion (astropy `apply_space_motion`) before cutting out.
