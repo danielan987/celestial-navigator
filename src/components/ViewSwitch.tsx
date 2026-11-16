@@ -10,9 +10,11 @@ type Props = {
 const OPTIONS: { id: PlateView; label: string }[] = [
   { id: 'blink', label: 'Blink' },
   { id: 'difference', label: 'Difference' },
+  { id: 'spectral', label: 'Spectral' },
 ]
 
-// Above the plate: blink through the plates themselves, or see only what changed between passes.
+// Above the plate: blink through the plates, see only what changed between passes, or look
+// at the field in SPHEREx's 102-colour all-sky cube.
 export default function ViewSwitch({ view, canShowDifference, onChange }: Props) {
   return (
     <div className="view-switch">

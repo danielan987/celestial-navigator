@@ -1,5 +1,4 @@
 import type { ColourKeyEntry, PassesResponse, Target } from '../api/types'
-import type { DifferenceImage } from '../hooks/useDifferenceImage'
 import type { LoadStatus } from '../hooks/useExplorer'
 import { imageForBand } from '../utils/bands'
 import { formatDate } from '../utils/dates'
@@ -11,9 +10,20 @@ type Props = {
   passesStatus: LoadStatus
   passIndex: number
   band: ColourKeyEntry | null // null = colour composite
-  // Set in the Difference view: shown instead of the pass. label: "Pass I → Pass III"
-  difference?: { image: DifferenceImage; label: string; band: string } | null
+  // Set in the Difference and Spectral views: shown instead of the pass (and always real data,
+  // so the "Simulated" tag is hidden)
+  altImage?: PlateImage | null
   onRetry: () => void
+}
+
+// An image made for the plate (a difference plate, a spectral map), with its words
+export type PlateImage = {
+  status: 'loading' | 'ready' | 'error'
+  url?: string
+  badge: string // "Difference · Pass I → Pass III · D3"
+  alt: string
+  loadingText: string // "Subtracting…"
+  errorText: string
 }
 
 function Corners() {
@@ -33,7 +43,7 @@ export default function SkyPlate({
   passesStatus,
   passIndex,
   band,
-  difference = null,
+  altImage = null,
   onRetry,
 }: Props) {
   const pass = passesData?.passes[passIndex]
@@ -64,14 +74,14 @@ export default function SkyPlate({
   } else {
     // 1 arcminute as a share of the field width
     const scaleWidth = (1 / 60 / passesData.fieldSizeDeg) * 100
-    const src = difference
-      ? difference.image.status === 'ready'
-        ? difference.image.url
+    const src = altImage
+      ? altImage.status === 'ready'
+        ? altImage.url
         : null
       : imageForBand(pass, band?.band ?? null)
     const bandText = band ? `, detector ${band.band} only (${band.wavelength})` : ''
-    const alt = difference
-      ? `Difference plate for ${target.name}: ${difference.label}, detector ${difference.band}`
+    const alt = altImage
+      ? altImage.alt
       : `${target.name}, ${pass.label} (${passIndex + 1} of ${total})${bandText}, observed ${formatDate(pass.date)}`
 
     content = (
@@ -81,11 +91,11 @@ export default function SkyPlate({
         ) : (
           <div className="sky-plate__message" role="status">
             <p>
-              {!difference
+              {!altImage
                 ? `No ${band?.band} images in this visit.`
-                : difference.image.status === 'error'
-                  ? 'The difference plate couldn’t be made.'
-                  : 'Subtracting…'}
+                : altImage.status === 'error'
+                  ? altImage.errorText
+                  : altImage.loadingText}
             </p>
           </div>
         )}
@@ -99,8 +109,8 @@ export default function SkyPlate({
         </span>
         <span className="sky-plate__badge" aria-hidden="true">
           {/* labels can be "Short visit", so show position separately */}
-          {difference ? (
-            `Difference · ${difference.label} · ${difference.band}`
+          {altImage ? (
+            altImage.badge
           ) : (
             <>
               {pass.label} · {passIndex + 1} of {total}
@@ -108,7 +118,7 @@ export default function SkyPlate({
             </>
           )}
         </span>
-        {passesData.simulated && (
+        {passesData.simulated && !altImage && (
           <span className="sky-plate__simulated" aria-hidden="true">
             Simulated
           </span>
@@ -118,7 +128,7 @@ export default function SkyPlate({
           1′
         </span>
 
-        {!difference &&
+        {!altImage &&
           passesData.candidates.map((c) => {
             const pos = c.positions.find((p) => p.passId === pass.id)
             if (!pos) return null

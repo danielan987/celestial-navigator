@@ -62,6 +62,19 @@ needed.
 To process real SPHEREx data you also need Python 3.9+; see
 [pipeline/README.md](pipeline/README.md).
 
+### Every feature (three terminals)
+
+The charted targets, Blink and Difference work with `npm run dev` alone. Two local Python
+services add the rest:
+
+| Service                      | Adds                                               | Start it with                                  |
+| ---------------------------- | -------------------------------------------------- | ---------------------------------------------- |
+| On-demand backend, port 8000 | fetching any RA/Dec ("Uncharted spot")             | `pipeline/.venv/bin/python pipeline/server.py` |
+| Science service, port 8001   | the Spectral view (all light, carbon and ice maps) | `.venv-science/bin/python science/server.py`   |
+
+One-time setup for each is in [docs/backend-notes.md](docs/backend-notes.md). Vite forwards
+`/api`, `/media` and `/science` to them; without them the app says so and carries on.
+
 ## How it fits together
 
 ```

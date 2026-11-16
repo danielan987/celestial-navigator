@@ -135,6 +135,51 @@ it). Data Release 1 only (via SIA). Single machine, local only: the server liste
 127.0.0.1 and has no authentication or disk limit, fine for the demo, not for the open
 internet.
 
+## Spectral maps: the science service (built)
+
+The Spectral view (Blink | Difference | **Spectral**) comes from Daniel's science service,
+`science/server.py`, a separate local service on **port 8001**. It reads SPHEREx's Data
+Release 1 all-sky cube (HiPS, 102 channels, every visit stacked) from IRSA with range reads,
+and returns, for a 0.1° field on the same north-up grid as the plates:
+
+- **All light**: the median across all channels (drawn on a logarithmic scale)
+- **Molecule maps** (`science/analysis.py`): carbon particles (PAH, 3.3 µm), water ice
+  (3.05 µm), CO₂ ice (4.27 µm), CO ice (4.67 µm), each against its nearby continuum; plus
+  GALEX FUV (not shown in the app yet)
+
+**Setup (once).** Its own environment, separate from the pipeline's:
+
+```bash
+python3 -m venv .venv-science
+.venv-science/bin/pip install -r science/requirements-py39.txt
+```
+
+Use `science/requirements-py39.txt` on Python 3.9 (the macOS system Python);
+`science/requirements.txt` (astropy 7) needs Python 3.11 or newer.
+
+**Run.**
+
+```bash
+.venv-science/bin/python science/server.py
+```
+
+`GET /science/extract?target=<id>` (a built-in target) or `?ra=&dec=` (any spot, named
+`spot_<ra>_<dec>` like the on-demand backend's), plus `&radius=30&z=0`. It answers with a
+status to poll and, when ready, a manifest of lossless float64 pixel arrays
+(`src/api/science.ts` loads them). The first request for a place takes 30–60 s; results are
+cached outside the repository in `../work/science-cache` (override with `SCIENCE_CACHE`).
+
+**In the app.** `src/hooks/useSpectralMap.ts` asks for the maps; `src/utils/spectral.ts` draws
+them on the plate with Daniel's limits (`plotLimits.ts`) and the inferno colour scale;
+`src/utils/spectralLayers.ts` holds each map's name, explanation and legend. If the service
+isn't running, the Spectral panel says how to start it (in development) or that it isn't
+connected (on a published site).
+
+**Limits.** The cube combines every visit, so these maps can't change between passes (per-pass
+maps would need the individual D4/D5 exposures; parked). Very bright stars are masked by
+SPHEREx's quality flags and show as grey holes (R Draconis, the Orion Nebula's core). The
+molecule maps are exploratory continuum ratios, not fitted detections.
+
 ## Decided
 
 - **Detectors:** D1, D3, D6 for a wide spread across 0.75–5 µm.

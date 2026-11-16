@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import DomeHero from './components/DomeHero'
 import Divider from './components/Divider'
 import TargetBar from './components/TargetBar'
@@ -7,12 +7,17 @@ import PlateCaption from './components/PlateCaption'
 import TimelinePanel from './components/TimelinePanel'
 import ColourKeyPanel from './components/ColourKeyPanel'
 import DifferencePanel from './components/DifferencePanel'
+import SpectralPanel from './components/SpectralPanel'
 import ViewSwitch from './components/ViewSwitch'
 import ObservationLog from './components/ObservationLog'
 import StorySection from './components/StorySection'
 import UnchartedSpot from './components/UnchartedSpot'
 import { defaultComparison, nearestTarget, spotAsTarget, useExplorer } from './hooks/useExplorer'
 import { useDifferenceImage } from './hooks/useDifferenceImage'
+import { useSpectralMap } from './hooks/useSpectralMap'
+import type { PlateImage } from './components/SkyPlate'
+import { layerById } from './utils/spectralLayers'
+import type { SpectralLayerId } from './utils/spectralLayers'
 import { usePreloadImages } from './hooks/usePreloadImages'
 import { useUrlState } from './hooks/useUrlState'
 import { hasBandImages, imageForBand } from './utils/bands'
@@ -46,6 +51,46 @@ export default function App() {
     showDifference && comparison && earlier && later
       ? { from: earlier, to: later, band: comparison.band }
       : null
+  // The Spectral view: Daniel's science service makes maps from SPHEREx's all-sky cube
+  const [spectralAttempt, setSpectralAttempt] = useState(0)
+  const [spectralLayerId, setSpectralLayerId] = useState<SpectralLayerId>('all')
+  const spectralLayer = layerById(spectralLayerId)
+  // A built-in target by its id; a fetched spot by its position
+  const showSpectral = explorer.view === 'spectral' && plateTarget !== null
+  const spectralMap = useSpectralMap(
+    !showSpectral ? null : selected ? { target: selected.id } : spot,
+    spectralAttempt,
+  )
+  const view = showSpectral ? 'spectral' : showDifference ? 'difference' : 'blink'
+
+  // What the plate shows instead of a pass, in the Difference and Spectral views
+  let altImage: PlateImage | null = null
+  if (showSpectral && plateTarget && spectralMap) {
+    altImage = {
+      status:
+        spectralMap.status === 'ready'
+          ? 'ready'
+          : spectralMap.status === 'loading'
+            ? 'loading'
+            : 'error',
+      url: spectralMap.status === 'ready' ? spectralMap.images[spectralLayer.id] : undefined,
+      badge: `Spectral · ${spectralLayer.button}`,
+      alt: `Spectral map of ${plateTarget.name}: ${spectralLayer.title.toLowerCase()}`,
+      loadingText: 'Building the spectral map…',
+      errorText: 'The spectral map isn’t available right now.',
+    }
+  } else if (difference && differenceImage) {
+    const label = `${difference.from.label} → ${difference.to.label}`
+    altImage = {
+      status: differenceImage.status,
+      url: differenceImage.status === 'ready' ? differenceImage.url : undefined,
+      badge: `Difference · ${label} · ${difference.band}`,
+      alt: `Difference plate for ${selected?.name}: ${label}, detector ${difference.band}`,
+      loadingText: 'Subtracting…',
+      errorText: 'The difference plate couldn’t be made.',
+    }
+  }
+
   const framesReady = usePreloadImages(
     passes.map((p) => imageForBand(p, band?.band ?? null)).filter((url) => url !== null),
   )
@@ -98,7 +143,7 @@ export default function App() {
               <div className="plate-column">
                 {explorer.passesStatus === 'ready' && (
                   <ViewSwitch
-                    view={showDifference ? 'difference' : 'blink'}
+                    view={view}
                     canShowDifference={comparison !== null}
                     onChange={explorer.setView}
                   />
@@ -109,15 +154,7 @@ export default function App() {
                   passesStatus={explorer.passesStatus}
                   passIndex={explorer.passIndex}
                   band={band}
-                  difference={
-                    difference && differenceImage
-                      ? {
-                          image: differenceImage,
-                          label: `${difference.from.label} → ${difference.to.label}`,
-                          band: difference.band,
-                        }
-                      : null
-                  }
+                  altImage={altImage}
                   onRetry={explorer.retryPasses}
                 />
                 <PlateCaption
@@ -126,11 +163,19 @@ export default function App() {
                   passIndex={explorer.passIndex}
                   colourKey={explorer.colourKey}
                   band={band}
-                  difference={difference}
+                  difference={showSpectral ? null : difference}
+                  spectral={showSpectral ? spectralLayer : null}
                 />
               </div>
               <aside className="side-column" aria-label="Timeframes and colour key">
-                {showDifference && comparison ? (
+                {showSpectral && spectralMap ? (
+                  <SpectralPanel
+                    map={spectralMap}
+                    layer={spectralLayer.id}
+                    onLayerChange={setSpectralLayerId}
+                    onRetry={() => setSpectralAttempt((n) => n + 1)}
+                  />
+                ) : showDifference && comparison ? (
                   <DifferencePanel
                     key={plateTarget.id}
                     passes={passes}

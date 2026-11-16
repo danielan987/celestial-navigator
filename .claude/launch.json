@@ -12,6 +12,12 @@
       "runtimeExecutable": "pipeline/.venv/bin/python",
       "runtimeArgs": ["-u", "pipeline/server.py"],
       "port": 8000
+    },
+    {
+      "name": "science",
+      "runtimeExecutable": ".venv-science/bin/python",
+      "runtimeArgs": ["-u", "science/server.py"],
+      "port": 8001
     }
   ]
 }

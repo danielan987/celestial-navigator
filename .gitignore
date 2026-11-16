@@ -27,3 +27,6 @@ dist-ssr
 pipeline/data/
 pipeline/.venv
 __pycache__/
+
+# Local spectral analysis environment (science/ service)
+.venv-science

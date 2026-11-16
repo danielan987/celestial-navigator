@@ -13,8 +13,9 @@ import { angularSeparation } from '../utils/sky'
 
 export type LoadStatus = 'loading' | 'ready' | 'error'
 
-// Blink = the plates themselves; Difference = a later pass minus an earlier one
-export type PlateView = 'blink' | 'difference'
+// Blink = the plates themselves; Difference = a later pass minus an earlier one;
+// Spectral = maps from SPHEREx's 102-colour all-sky cube (Daniel's science service)
+export type PlateView = 'blink' | 'difference' | 'spectral'
 
 // The difference plate on screen: two passes (indexes, earlier first) and one detector
 export type Comparison = { from: number; to: number; band: string }
